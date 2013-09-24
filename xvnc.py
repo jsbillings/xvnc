@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+################################################################################
 #
 # Xvnc Report Generator.
 #
@@ -7,6 +8,10 @@
 # of each vnc host consisting of its respective session count, total login 
 # time, and avg login time. It also prints the total number of unique users and
 # total number of sessions for any vnc host.
+#
+# Author:
+#   Christopher W. Heyer (cwheyer@umich.edu): September 2013
+#    
 ################################################################################
 import os, sys, time, re, datetime
 
@@ -115,13 +120,17 @@ class xvnc_Generator(object):
         else:
             self.users[user] += 1
 
+# closeLogs():
+#   Closes all the active sessions in the login data dictionary and adds the 
+# total time the session was active up until the end of the report logs.
     def closeLogs(self):
         for host in self.logins.iterkeys():
             for pid in self.logins[host]['pids'].iterkeys():
                 for item in self.logins[host]['pids'][pid][1]:
                     if item['active']:
+                        item['active'] = False;
                         self.logins[host]['totTime'] += self.end - item['start']
-                    self.logins
+                        item['end'] = self.end
 
 ################################################################################
 
