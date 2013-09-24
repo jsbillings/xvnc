@@ -1,5 +1,13 @@
 #!/usr/bin/env python
-
+#
+# Xvnc Report Generator.
+#
+# Description:
+#   This program parses vnc report logs through stdin. It generates a summary 
+# of each vnc host consisting of its respective session count, total login 
+# time, and avg login time. It also prints the total number of unique users and
+# total number of sessions for any vnc host.
+################################################################################
 import os, sys, time, re, datetime
 
 class xvnc_Generator(object):
@@ -11,10 +19,18 @@ class xvnc_Generator(object):
         self.start = 0
         self.end = 0
 
+# readLine():
+#   Searches the given line for a valid ssh session log and if successfull, it
+# calls the addExp member function to add this ssh session to the data members
     def readLine(self, line):
         m = self.regEx.search(line)
         if m: self.addExp(m)
 
+# addExp():
+#   Takes a the given valid ssh session log, parses it for the logtime, host,
+# user, pid, and action(open or close an ssh session) and adds it to the login
+# and user data dictionaries through openSess, closeSess, and addUser member
+# functions. 
     def addExp(self, m):
         month = m.group('month')
         day = m.group('day')
@@ -25,6 +41,7 @@ class xvnc_Generator(object):
         except TypeError:
             pid = m.group('pid')
             sys.stderr.write('Error in logs: %s is not a valid pid.\n' % pid)
+            return
         action = m.group('action')
         user = m.group('user')
         try:
@@ -32,6 +49,7 @@ class xvnc_Generator(object):
         except Exception:
             sys.stderr.write('Error in logs: unable to parse time (%s %s %s).\n'
                              % (month, day, logtime))
+            return
         if not self.start:
             self.start = timeEp
         self.end = timeEp
@@ -42,6 +60,10 @@ class xvnc_Generator(object):
             if self.closeSess(host, pid, timeEp):
                 self.addUser(user)
 
+# openSess():
+#   Adds the valid open ssh session log to the list of ssh sessions. If the
+# given log represents a new session that was not already in the login data it
+# returns true, otherwise it returns false.
     def openSess(self, host, pid, timeEp):
         if not self.logins.has_key(host):
             self.logins[host] = {'pids': {}, 'sessions': 0, 'totTime': 0}
@@ -60,13 +82,16 @@ class xvnc_Generator(object):
             self.logins[host]['sessions'] += 1
         return True;
 
+# closeSess():
+#   closeSess() uses the given close ssh session log to remove active sessions
+# and tally total login time for the corresponding host. If the given log 
+# represents a new session that was not already in the login data it returns
+# true, otherwise it returns false.
     def closeSess(self, host, pid, timeEp):
         if not self.logins.has_key(host):
             self.logins[host] = {'pids': {}, 'sessions': 0, 'totTime': 0}
         if not self.logins[host]['pids'].has_key(pid):
-            self.logins[host]['pids'][pid] = [ 1, [{'start': False, 
-                                                    'end': timeEp, 
-                                                    'active': False}]]
+            self.logins[host]['pids'][pid] = [ 1, []]
             self.logins[host]['sessions'] += 1
         else:
             for item in self.logins[host]['pids'][pid][1]:
@@ -74,11 +99,16 @@ class xvnc_Generator(object):
                     item['active'] = False
                     item['end'] = timeEp
                     self.logins[host]['totTime'] += item['end'] - item['start']
+                    self.logins[host]['pids'][pid][1].remove(item)
                     return False;
             sys.stderr.write('Error in logs: pid (%s) already closed.\n' % pid)
             return False;
         return True;
 
+# addUser():
+#   addUser() adds a new key for any unique user not already in the user
+# dictionary and sets it session count to 1. If the user is not unique then it
+# increments the session count by 1.
     def addUser(self, user):
         if not self.users.has_key(user):
             self.users[user] = 1;
@@ -91,6 +121,7 @@ class xvnc_Generator(object):
                 for item in self.logins[host]['pids'][pid][1]:
                     if item['active']:
                         self.logins[host]['totTime'] += self.end - item['start']
+                    self.logins
 
 ################################################################################
 
