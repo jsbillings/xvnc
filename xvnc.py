@@ -19,7 +19,7 @@ import os, sys, time, re, datetime, argparse
 ################################################################################
 # XVNC report generator class
 class xvnc_Generator(object):
-    regEx = re.compile('(?P<month>\w+) (?P<day>\d+) (?P<logtime>\d\d:\d\d:\d\d) (?P<host>caen-vnc[^.]+\.engin\.umich\.edu) sshd\[(?P<pid>\d+)\]: pam_unix\(sshd:session\): session (?P<action>\w+) for user (?P<user>\w+)')
+    regEx = re.compile('(?P<month>\w+)\s+(?P<day>\d+) (?P<logtime>\d\d:\d\d:\d\d) (?P<host>caen-vnc[^.]+\.engin\.umich\.edu) sshd\[(?P<pid>\d+)\]: pam_unix\(sshd:session\): session (?P<action>\w+) for user (?P<user>\w+)')
 
     def __init__(self):
         self.logins = {}
@@ -133,7 +133,8 @@ reports.closeLogs()
 print '\n Report Log Summary:\n'
 print ' %-39.39s %38.38s' % (('Start: %s' % time.asctime(time.localtime(reports.start))), ('End: %s' % time.asctime(time.localtime(reports.end))))
 print ' %s \n' % ('-' * 78)
-print ' Host                                 Sessions Total Login Time Avg Login Time'
+print '                                         #        Total Session    Avg Session'
+print ' Host                                 Sessions     Hour:Min:Sec   Hour:Min:Sec'
 print ' ------------------------------------ -------- ---------------- --------------'
 for host in sorted(reports.logins.keys()):
     print ' %-36.36s %8d %16.16s %14.14s' % (host, reports.logins[host]['sessions'], secs2HHMMSS(reports.logins[host]['totTime']), secs2HHMMSS(reports.logins[host]['totTime']/float(reports.logins[host]['sessions'])))
