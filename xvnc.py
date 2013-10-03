@@ -11,16 +11,21 @@
 #
 # Author:
 #   Christopher W. Heyer (cwheyer@umich.edu): September 2013
+# Added additional functionality/bugfixes:
+#   Jonathan S. Billings (jsbillin@umich.edu): October 2013
 #    
 ################################################################################
 # import modules
 import os, sys, time, re, datetime, argparse
 
+# Global variables
+regEx = re.compile('(?P<month>\w+)\s+(?P<day>\d+) (?P<logtime>\d\d:\d\d:\d\d) (?P<host>caen-vnc[^.]+\.engin\.umich\.edu) sshd\[(?P<pid>\d+)\]: pam_unix\(sshd:session\): session (?P<action>\w+) for user (?P<user>\w+)')
+today = time.localtime(time.time())
+
 ################################################################################
 # XVNC report generator class
 class xvnc_Generator(object):
-    regEx = re.compile('(?P<month>\w+)\s+(?P<day>\d+) (?P<logtime>\d\d:\d\d:\d\d) (?P<host>caen-vnc[^.]+\.engin\.umich\.edu) sshd\[(?P<pid>\d+)\]: pam_unix\(sshd:session\): session (?P<action>\w+) for user (?P<user>\w+)')
-
+    
     def __init__(self):
         self.logins = {}
         self.users = {}
@@ -28,7 +33,7 @@ class xvnc_Generator(object):
         self.end = 0
 
     def readLine(self, line):
-        m = self.regEx.search(line)
+        m = regEx.search(line)
         if m: self.addExp(m)
  
     def addExp(self, m):
@@ -45,7 +50,7 @@ class xvnc_Generator(object):
         action = m.group('action')
         user = m.group('user')
         try:
-            timeEp = time.mktime(time.strptime('%s %s %s %s' % (month, day, time.localtime(time.time()).tm_year, logtime), '%b %d %Y %H:%M:%S'))
+            timeEp = time.mktime(time.strptime('%s %s %s %s' % (month, day, today.tm_year, logtime), '%b %d %Y %H:%M:%S'))
         except Exception:
             sys.stderr.write('Error in logs: unable to parse time (%s %s %s).\n'
                              % (month, day, logtime))
